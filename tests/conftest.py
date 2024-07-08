@@ -1,11 +1,13 @@
 import asyncio
 import os
-from typing import Generator, Any
+from typing import Any
+from typing import Generator
 
 import asyncpg
 import pytest
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import sessionmaker
 from starlette.testclient import TestClient
 
@@ -14,10 +16,14 @@ from db.session import get_db
 from main import app
 
 # create async engine for interaction with database
-test_engine = create_async_engine(url=settings.TEST_DATABASE_URL, future=True, echo=True)
+test_engine = create_async_engine(
+    url=settings.TEST_DATABASE_URL, future=True, echo=True
+)
 
 # create session for the interaction with database
-test_async_session = sessionmaker(test_engine, expire_on_commit=False, class_=AsyncSession)
+test_async_session = sessionmaker(
+    test_engine, expire_on_commit=False, class_=AsyncSession
+)
 
 CLEAN_TABLES = [
     "users",
@@ -75,7 +81,9 @@ async def client() -> Generator[TestClient, Any, None]:
 
 @pytest.fixture(scope="session")
 async def asyncpg_pool():
-    pool = await asyncpg.create_pool("".join(settings.TEST_DATABASE_URL.split("+asyncpg")))
+    pool = await asyncpg.create_pool(
+        "".join(settings.TEST_DATABASE_URL.split("+asyncpg"))
+    )
     yield pool
     pool.close()
 
@@ -84,16 +92,26 @@ async def asyncpg_pool():
 async def get_user_from_database(asyncpg_pool):
     async def get_user_from_database_by_uuid(user_id: str):
         async with asyncpg_pool.acquire() as connection:
-            return await connection.fetch("""SELECT * FROM users WHERE user_id = $1;""", user_id)
+            return await connection.fetch(
+                """SELECT * FROM users WHERE user_id = $1;""", user_id
+            )
 
     return get_user_from_database_by_uuid
 
 
 @pytest.fixture
 async def create_user_in_database(asyncpg_pool):
-    async def create_user_in_database(user_id: str, name: str, surname: str, email: str, is_active: bool):
+    async def create_user_in_database(
+        user_id: str, name: str, surname: str, email: str, is_active: bool
+    ):
         async with asyncpg_pool.acquire() as connection:
-            return await connection.execute("""INSERT INTO users VALUES ($1, $2, $3, $4, $5)""", user_id, name, surname,
-                                            email, is_active)
+            return await connection.execute(
+                """INSERT INTO users VALUES ($1, $2, $3, $4, $5)""",
+                user_id,
+                name,
+                surname,
+                email,
+                is_active,
+            )
 
     return create_user_in_database

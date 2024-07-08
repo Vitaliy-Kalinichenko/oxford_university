@@ -4,7 +4,10 @@ from typing import Optional
 from uuid import UUID
 
 from fastapi import HTTPException
-from pydantic import BaseModel, EmailStr, validator, constr
+from pydantic import BaseModel
+from pydantic import constr
+from pydantic import EmailStr
+from pydantic import validator
 
 #########################
 # BLOCK WITH API MODELS #
@@ -54,7 +57,8 @@ class BaseUser(BaseModel):
     def validate_name(cls, value):
         if not LETTER_MATCH_PATTERN.match(value):
             raise HTTPException(
-                status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail="Name should contains only letters."
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail="Name should contains only letters.",
             )
         return value
 
@@ -62,7 +66,8 @@ class BaseUser(BaseModel):
     def validate_surname(cls, value):
         if not LETTER_MATCH_PATTERN.match(value):
             raise HTTPException(
-                status_code=HTTPStatus.UNPROCESSABLE_ENTITY, detail="Surname should contains only letters."
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail="Surname should contains only letters.",
             )
         return value
 
@@ -78,5 +83,3 @@ class CreateUser(BaseUser):
 
 class UpdateUser(BaseUser):
     pass
-
-

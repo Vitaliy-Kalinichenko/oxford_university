@@ -38,7 +38,9 @@ async def test_create_user(client: TestClient, get_user_from_database):
     assert str(user_from_db["user_id"]) == data_from_resp["user_id"]
 
 
-async def test_delete_user(client: TestClient, create_user_in_database, get_user_from_database):
+async def test_delete_user(
+    client: TestClient, create_user_in_database, get_user_from_database
+):
     user_id = uuid.uuid4()
     user_data: User = {
         "user_id": user_id,
@@ -60,7 +62,9 @@ async def test_delete_user(client: TestClient, create_user_in_database, get_user
     assert user_from_db["user_id"] == user_id
 
 
-async def test_get_user_by_id(client: TestClient, create_user_in_database, get_user_from_database):
+async def test_get_user_by_id(
+    client: TestClient, create_user_in_database, get_user_from_database
+):
     user_id = uuid.uuid4()
     user_data: User = {
         "user_id": user_id,
@@ -80,7 +84,9 @@ async def test_get_user_by_id(client: TestClient, create_user_in_database, get_u
     assert users_from_resp["user_id"] == str(user_id)
 
 
-async def test_update_user(client: TestClient, create_user_in_database, get_user_from_database):
+async def test_update_user(
+    client: TestClient, create_user_in_database, get_user_from_database
+):
     user_id_for_update = uuid.uuid4()
     user_data_for_update: User = {
         "user_id": user_id_for_update,
@@ -104,7 +110,9 @@ async def test_update_user(client: TestClient, create_user_in_database, get_user
     }
     await create_user_in_database(**user_data_for_update)
     await create_user_in_database(**user_data_not_for_update)
-    resp = client.patch(f"/user/?user_id={user_id_for_update}", data=json.dumps(user_data_updated))
+    resp = client.patch(
+        f"/user/?user_id={user_id_for_update}", data=json.dumps(user_data_updated)
+    )
     data_from_resp = resp.json()
     assert resp.status_code == HTTPStatus.OK
     assert data_from_resp["updated_user_id"] == str(user_id_for_update)
@@ -128,14 +136,17 @@ async def test_update_user(client: TestClient, create_user_in_database, get_user
     assert not_updated_user_from_db["is_active"] is True
 
 
-@pytest.mark.parametrize("user_data_updated, expected_status_code, expected_status_detail", [
-    (
+@pytest.mark.parametrize(
+    "user_data_updated, expected_status_code, expected_status_detail",
+    [
+        (
             {},
             422,
-            {"detail": "At least one parameter for user update info should be provided."}
-
-    ),
-    (
+            {
+                "detail": "At least one parameter for user update info should be provided."
+            },
+        ),
+        (
             {
                 "123": "123",
             },
@@ -143,17 +154,14 @@ async def test_update_user(client: TestClient, create_user_in_database, get_user
             {
                 "detail": [
                     {
-                        "loc": [
-                            "body",
-                            "123"
-                        ],
+                        "loc": ["body", "123"],
                         "msg": "extra fields not permitted",
-                        "type": "value_error.extra"
+                        "type": "value_error.extra",
                     }
                 ]
-            }
-    ),
-    (
+            },
+        ),
+        (
             {
                 "name": "",
             },
@@ -161,29 +169,22 @@ async def test_update_user(client: TestClient, create_user_in_database, get_user
             {
                 "detail": [
                     {
-                        "loc": [
-                            "body",
-                            "name"
-                        ],
+                        "loc": ["body", "name"],
                         "msg": "ensure this value has at least 1 characters",
                         "type": "value_error.any_str.min_length",
-                        "ctx": {
-                            "limit_value": 1
-                        }
+                        "ctx": {"limit_value": 1},
                     }
                 ]
-            }
-    ),
-    (
+            },
+        ),
+        (
             {
                 "name": "123",
             },
             422,
-            {
-                "detail": "Name should contains only letters."
-            }
-    ),
-    (
+            {"detail": "Name should contains only letters."},
+        ),
+        (
             {
                 "email": "123",
             },
@@ -191,17 +192,14 @@ async def test_update_user(client: TestClient, create_user_in_database, get_user
             {
                 "detail": [
                     {
-                        "loc": [
-                            "body",
-                            "email"
-                        ],
+                        "loc": ["body", "email"],
                         "msg": "value is not a valid email address",
-                        "type": "value_error.email"
+                        "type": "value_error.email",
                     }
                 ]
-            }
-    ),
-    (
+            },
+        ),
+        (
             {
                 "email": "",
             },
@@ -209,19 +207,22 @@ async def test_update_user(client: TestClient, create_user_in_database, get_user
             {
                 "detail": [
                     {
-                        "loc": [
-                            "body",
-                            "email"
-                        ],
+                        "loc": ["body", "email"],
                         "msg": "value is not a valid email address",
-                        "type": "value_error.email"
+                        "type": "value_error.email",
                     }
                 ]
-            }
-    ),
-])
-async def test_update_user_validation_error(client: TestClient, create_user_in_database, user_data_updated,
-                                            expected_status_code, expected_status_detail):
+            },
+        ),
+    ],
+)
+async def test_update_user_validation_error(
+    client: TestClient,
+    create_user_in_database,
+    user_data_updated,
+    expected_status_code,
+    expected_status_detail,
+):
     user_id = uuid.uuid4()
     user_data: User = {
         "user_id": user_id,

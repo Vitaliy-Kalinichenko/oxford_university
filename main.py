@@ -1,5 +1,6 @@
 import uvicorn
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter
+from fastapi import FastAPI
 
 from api.handlers import user_router
 
