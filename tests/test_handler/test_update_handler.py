@@ -1,87 +1,11 @@
 import json
 import uuid
-from http import HTTPStatus
-from typing import TypedDict
 
 import pytest
+from fastapi import status
 from starlette.testclient import TestClient
 
-
-class User(TypedDict):
-    user_id: uuid.UUID
-    name: str
-    surname: str
-    email: str
-    is_active: bool
-
-
-async def test_create_user(client: TestClient, get_user_from_database):
-    user_data = {
-        "name": "Vitalii",
-        "surname": "Kalinichenko",
-        "email": "boba@boba.com",
-    }
-    resp = client.post("/user/", data=json.dumps(user_data))
-    data_from_resp: User = resp.json()
-    assert resp.status_code == HTTPStatus.OK
-    assert data_from_resp["name"] == user_data["name"]
-    assert data_from_resp["surname"] == user_data["surname"]
-    assert data_from_resp["email"] == user_data["email"]
-    assert data_from_resp["is_active"] is True
-    user_from_db = await get_user_from_database(data_from_resp["user_id"])
-    assert len(user_from_db) == 1
-    user_from_db: User = dict(user_from_db[0])
-    assert user_from_db["name"] == user_data["name"]
-    assert user_from_db["surname"] == user_data["surname"]
-    assert user_from_db["email"] == user_data["email"]
-    assert user_from_db["is_active"] is True
-    assert str(user_from_db["user_id"]) == data_from_resp["user_id"]
-
-
-async def test_delete_user(
-    client: TestClient, create_user_in_database, get_user_from_database
-):
-    user_id = uuid.uuid4()
-    user_data: User = {
-        "user_id": user_id,
-        "name": "Vitalii",
-        "surname": "Kalinichenko",
-        "email": "boba@boba.com",
-        "is_active": True,
-    }
-    await create_user_in_database(**user_data)
-    resp = client.delete(f"/user/?user_id={user_id}")
-    assert resp.status_code == HTTPStatus.OK
-    assert resp.json() == {"deleted_user_id": str(user_id)}
-    users_from_db = await get_user_from_database(user_id)
-    user_from_db: User = dict(users_from_db[0])
-    assert user_from_db["name"] == user_data["name"]
-    assert user_from_db["surname"] == user_data["surname"]
-    assert user_from_db["email"] == user_data["email"]
-    assert user_from_db["is_active"] is False
-    assert user_from_db["user_id"] == user_id
-
-
-async def test_get_user_by_id(
-    client: TestClient, create_user_in_database, get_user_from_database
-):
-    user_id = uuid.uuid4()
-    user_data: User = {
-        "user_id": user_id,
-        "name": "Vitalii",
-        "surname": "Kalinichenko",
-        "email": "boba@boba.com",
-        "is_active": True,
-    }
-    await create_user_in_database(**user_data)
-    resp = client.get(f"/user/?user_id={user_id}")
-    assert resp.status_code == HTTPStatus.OK
-    users_from_resp = resp.json()
-    assert users_from_resp["name"] == user_data["name"]
-    assert users_from_resp["surname"] == user_data["surname"]
-    assert users_from_resp["email"] == user_data["email"]
-    assert users_from_resp["is_active"] is True
-    assert users_from_resp["user_id"] == str(user_id)
+from tests.conftest import User
 
 
 async def test_update_user(
@@ -114,7 +38,7 @@ async def test_update_user(
         f"/user/?user_id={user_id_for_update}", data=json.dumps(user_data_updated)
     )
     data_from_resp = resp.json()
-    assert resp.status_code == HTTPStatus.OK
+    assert resp.status_code == status.HTTP_200_OK
     assert data_from_resp["updated_user_id"] == str(user_id_for_update)
 
     #  check updated user
@@ -236,3 +160,36 @@ async def test_update_user_validation_error(
     assert resp.status_code == expected_status_code
     data_from_resp = resp.json()
     assert data_from_resp == expected_status_detail
+
+
+async def test_update_user_id_validation_error(client: TestClient):
+    user_data_updated = {
+        "name": "Ivan",
+        "surname": "Ivanov",
+        "email": "cheburek@kek.com",
+    }
+    resp = client.patch("/user/?user_id=123", data=json.dumps(user_data_updated))
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    data_from_response = resp.json()
+    assert data_from_response == {
+        "detail": [
+            {
+                "loc": ["query", "user_id"],
+                "msg": "value is not a valid uuid",
+                "type": "type_error.uuid",
+            }
+        ]
+    }
+
+
+async def test_update_user_not_found_error(client: TestClient):
+    user_data_updated = {
+        "name": "Ivan",
+        "surname": "Ivanov",
+        "email": "cheburek@kek.com",
+    }
+    user_id = uuid.uuid4()
+    resp = client.patch(f"/user/?user_id={user_id}", data=json.dumps(user_data_updated))
+    assert resp.status_code == status.HTTP_404_NOT_FOUND
+    resp_data = resp.json()
+    assert resp_data == {"detail": f"User with id {user_id} not found."}

@@ -2,6 +2,8 @@ import asyncio
 import os
 from typing import Any
 from typing import Generator
+from typing import TypedDict
+from uuid import UUID
 
 import asyncpg
 import pytest
@@ -15,19 +17,18 @@ import settings
 from db.session import get_db
 from main import app
 
-# create async engine for interaction with database
-test_engine = create_async_engine(
-    url=settings.TEST_DATABASE_URL, future=True, echo=True
-)
-
-# create session for the interaction with database
-test_async_session = sessionmaker(
-    test_engine, expire_on_commit=False, class_=AsyncSession
-)
 
 CLEAN_TABLES = [
     "users",
 ]
+
+
+class User(TypedDict):
+    user_id: UUID
+    name: str
+    surname: str
+    email: str
+    is_active: bool
 
 
 @pytest.fixture(scope="session")
@@ -62,6 +63,15 @@ async def clean_tables(async_session_test):
 
 async def _get_test_db():
     try:
+        # create async engine for interaction with database
+        test_engine = create_async_engine(
+            url=settings.TEST_DATABASE_URL, future=True, echo=True
+        )
+
+        # create session for the interaction with database
+        test_async_session = sessionmaker(
+            test_engine, expire_on_commit=False, class_=AsyncSession
+        )
         yield test_async_session()
     finally:
         pass
