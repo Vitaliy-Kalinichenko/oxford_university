@@ -79,7 +79,13 @@ class CreateUser(BaseUser):
     name: constr(min_length=1)
     surname: constr(min_length=1)
     email: EmailStr
+    password: str
 
 
 class UpdateUser(BaseUser):
     pass
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
