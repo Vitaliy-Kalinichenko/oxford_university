@@ -132,3 +132,4 @@ dmypy.json
 tests/.pytest_cache
 tests/migrations
 tests/alembic.ini
+alembic.ini

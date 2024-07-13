@@ -37,6 +37,7 @@ async def test_create_user(client: TestClient, get_user_from_database):
         "name": "Boba",
         "surname": "Bobenko",
         "email": "boba@boba.com",
+        "password": "SamplePass1!",
     }
     data_from_resp = await create_user(client, user_data)
     await verify_user_in_db(
@@ -51,6 +52,7 @@ async def test_create_user_duplicate_email_error(
         "name": "Boba",
         "surname": "Bobenko",
         "email": "boba@boba.com",
+        "password": "SamplePass1!",
     }
     data_from_resp = await create_user(client, user_data)
     await verify_user_in_db(
@@ -60,6 +62,7 @@ async def test_create_user_duplicate_email_error(
         "name": "Alice",
         "surname": "Wonderland",
         "email": "boba@boba.com",
+        "password": "SamplePass1!",
     }
     resp = client.post("/user/", data=json.dumps(user_data_same_email))
     assert resp.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
@@ -92,6 +95,11 @@ async def test_create_user_duplicate_email_error(
                         "msg": "field required",
                         "type": "value_error.missing",
                     },
+                    {
+                        "loc": ["body", "password"],
+                        "msg": "field required",
+                        "type": "value_error.missing",
+                    },
                 ]
             },
         ),
@@ -114,7 +122,12 @@ async def test_create_user_duplicate_email_error(
                         "loc": ["body", "email"],
                         "msg": "value is not a valid email address",
                         "type": "value_error.email",
-                    }
+                    },
+                    {
+                        "loc": ["body", "password"],
+                        "msg": "field required",
+                        "type": "value_error.missing",
+                    },
                 ]
             },
         ),
@@ -123,6 +136,7 @@ async def test_create_user_duplicate_email_error(
                 "name": "Boba",
                 "surname": "Bobenko",
                 "email": "boba@boba.com",
+                "password": "SamplePass1",
                 "123": "123",
             },
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -141,6 +155,7 @@ async def test_create_user_duplicate_email_error(
                 "name": "",
                 "surname": "Bobenko",
                 "email": "boba@boba.com",
+                "password": "SamplePass1",
             },
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             {
@@ -157,7 +172,7 @@ async def test_create_user_duplicate_email_error(
     ],
 )
 async def test_create_user_validation_error(
-    client, user_data_for_creation, expected_status_code, expected_detail
+    client: TestClient, user_data_for_creation, expected_status_code, expected_detail
 ):
     resp = client.post("/user/", data=json.dumps(user_data_for_creation))
     data_from_resp = resp.json()
